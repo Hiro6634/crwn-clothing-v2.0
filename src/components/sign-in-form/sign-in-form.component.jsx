@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+
 import Button from "../button/button.component";
 import { 
     signInWithGooglePopup,
@@ -7,6 +8,7 @@ import {
 } from "../../utils/firebase/firebase.utils";
 
 import FormInput from "../form-input/form-input.component";
+import { UserContext } from "../../contexts/user.context";
 
 import './sign-in.styles.scss';
 
@@ -19,6 +21,7 @@ const SignInForm = () => {
     const [formFields, setFormFields] = useState(defaultFormFields);
     const { email, password } = formFields;
 
+    const { setCurrentUser} = useContext(UserContext); 
     const resetFormFields = () => {
         setFormFields(defaultFormFields);
     }
@@ -32,9 +35,25 @@ const SignInForm = () => {
         event.preventDefault();  
     
         try{
-            const respnse = signInAuthUserWithEmailAndPassword(email, password);
+            const {user} = signInAuthUserWithEmailAndPassword(
+                email, 
+                password
+            );
+            setCurrentUser(user);
+            
             resetFormFields();
         } catch(error){
+            switch(error.code){
+                case "auth/wrong-password":
+                    alert('incorrect password for email');
+                    break;
+                case "auth/user-not-found":
+                    alert('no user associated with this email');
+                    break;
+                default:
+                    console.log(error);
+            }
+            return;
         }
     }
     
@@ -68,7 +87,7 @@ const SignInForm = () => {
                 />
                 <div className='buttons-container'>
                     <Button  type='submit'>Sign In</Button>
-                    <Button  buttonType='google' onClick={signInWithGoogle}>Google Sign In</Button>
+                    <Button  buttonType='google' type='button' onClick={signInWithGoogle}>Google Sign In</Button>
                 </div>               
             </form>
         </div>
